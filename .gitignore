@@ -1,0 +1,3 @@
+src/posts/
+*.json
+scrape.py

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TechBooks Store — Scraping Practice</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f4f4f4; color: #333; }
+
+    header { background: #1a1a2e; color: white; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; }
+    header h1 { font-size: 22px; }
+    nav a { color: #ccc; text-decoration: none; margin-left: 20px; font-size: 14px; }
+    nav a:hover { color: white; }
+
+    .hero { background: #16213e; color: white; padding: 48px 32px; text-align: center; }
+    .hero h2 { font-size: 32px; margin-bottom: 12px; }
+    .hero p { font-size: 16px; color: #aaa; }
+    .hero .badge { display: inline-block; background: #e94560; color: white; padding: 4px 12px; border-radius: 4px; font-size: 13px; margin-top: 12px; }
+
+    main { max-width: 1100px; margin: 32px auto; padding: 0 16px; }
+
+    section { margin-bottom: 40px; }
+    section h2 { font-size: 20px; margin-bottom: 16px; border-bottom: 2px solid #ddd; padding-bottom: 8px; }
+
+    /* Products */
+    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+    .product-card { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 16px; }
+    .product-card img { width: 100%; height: 120px; object-fit: cover; background: #eee; border-radius: 4px; display: block; margin-bottom: 12px; }
+    .product-card h3 { font-size: 15px; margin-bottom: 6px; }
+    .product-card .author { font-size: 13px; color: #888; margin-bottom: 6px; }
+    .product-card .price { font-size: 18px; font-weight: bold; color: #e94560; }
+    .product-card .original-price { font-size: 13px; color: #aaa; text-decoration: line-through; margin-left: 8px; }
+    .product-card .rating { font-size: 13px; color: #f5a623; margin-top: 6px; }
+    .product-card .tag { display: inline-block; font-size: 11px; background: #eef; color: #446; padding: 2px 8px; border-radius: 10px; margin-top: 8px; }
+    .badge-new { background: #27ae60; color: white; font-size: 11px; padding: 2px 8px; border-radius: 4px; float: right; }
+    .badge-sale { background: #e94560; color: white; font-size: 11px; padding: 2px 8px; border-radius: 4px; float: right; }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; background: white; }
+    th { background: #1a1a2e; color: white; padding: 10px 14px; text-align: left; font-size: 14px; }
+    td { padding: 10px 14px; border-bottom: 1px solid #eee; font-size: 14px; }
+    tr:hover td { background: #f9f9f9; }
+    .stock-yes { color: #27ae60; font-weight: bold; }
+    .stock-no { color: #e74c3c; font-weight: bold; }
+
+    /* Blog */
+    .blog-list { display: flex; flex-direction: column; gap: 16px; }
+    .blog-card { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .blog-card .meta { font-size: 12px; color: #aaa; margin-bottom: 4px; }
+    .blog-card h3 { font-size: 16px; margin-bottom: 6px; }
+    .blog-card p { font-size: 14px; color: #666; }
+    .blog-card .read-more { font-size: 13px; color: #1a1a2e; text-decoration: none; font-weight: bold; white-space: nowrap; margin-left: 16px; }
+
+    /* Reviews */
+    .reviews { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    .review-card { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 16px; }
+    .review-card .reviewer { font-size: 14px; font-weight: bold; margin-bottom: 4px; }
+    .review-card .stars { color: #f5a623; font-size: 14px; margin-bottom: 8px; }
+    .review-card p { font-size: 13px; color: #555; }
+    .review-card .date { font-size: 12px; color: #aaa; margin-top: 8px; }
+
+    /* Categories */
+    .category-list { list-style: none; display: flex; flex-wrap: wrap; gap: 12px; }
+    .category-list li a { display: block; padding: 8px 20px; background: white; border: 1px solid #ddd; border-radius: 20px; text-decoration: none; color: #333; font-size: 14px; }
+    .category-list li a:hover { background: #1a1a2e; color: white; }
+    .category-list li a span { color: #888; font-size: 12px; margin-left: 4px; }
+
+    footer { background: #1a1a2e; color: #aaa; padding: 32px; text-align: center; font-size: 14px; margin-top: 40px; }
+    footer a { color: #ccc; margin: 0 12px; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<!-- ===================== HEADER ===================== -->
+<header id="site-header">
+  <h1 class="site-title">TechBooks Store</h1>
+  <nav id="main-nav">
+    <a href="/books" class="nav-link">Books</a>
+    <a href="/courses" class="nav-link">Courses</a>
+    <a href="/blog" class="nav-link">Blog</a>
+    <a href="/about" class="nav-link">About</a>
+    <a href="/contact" class="nav-link">Contact</a>
+  </nav>
+</header>
+
+<!-- ===================== HERO ===================== -->
+<div class="hero" id="hero-banner" data-campaign="summer-sale">
+  <h2>Learn to Code. Ship Faster.</h2>
+  <p>Curated books and courses for backend developers, scrapers, and builders.</p>
+  <span class="badge">Summer Sale — Up to 40% Off</span>
+</div>
+
+<main>
+
+  <!-- ===================== CATEGORIES ===================== -->
+  <section id="categories">
+    <h2>Browse Categories</h2>
+    <ul class="category-list">
+      <li><a href="/category/python" data-category="python">Python <span>(24)</span></a></li>
+      <li><a href="/category/web-scraping" data-category="web-scraping">Web Scraping <span>(11)</span></a></li>
+      <li><a href="/category/databases" data-category="databases">Databases <span>(17)</span></a></li>
+      <li><a href="/category/javascript" data-category="javascript">JavaScript <span>(30)</span></a></li>
+      <li><a href="/category/algorithms" data-category="algorithms">Algorithms <span>(9)</span></a></li>
+      <li><a href="/category/devops" data-category="devops">DevOps <span>(14)</span></a></li>
+    </ul>
+  </section>
+
+  <!-- ===================== PRODUCT CARDS ===================== -->
+  <section id="featured-books">
+    <h2>Featured Books</h2>
+    <div class="product-grid">
+
+      <div class="product-card" data-id="101" data-category="python">
+        <span class="badge-new">New</span>
+        <img src="" alt="Python Mastery" />
+        <h3 class="book-title">Python Mastery</h3>
+        <p class="author">by <span class="author-name">Mark Lutz</span></p>
+        <div>
+          <span class="price">$29.99</span>
+          <span class="original-price">$49.99</span>
+        </div>
+        <div class="rating" data-score="4.8">★★★★★ 4.8 (312 reviews)</div>
+        <span class="tag">Python</span>
+        <span class="tag">Beginner</span>
+      </div>
+
+      <div class="product-card" data-id="102" data-category="web-scraping">
+        <span class="badge-sale">Sale</span>
+        <img src="" alt="Web Scraping with Python" />
+        <h3 class="book-title">Web Scraping with Python</h3>
+        <p class="author">by <span class="author-name">Ryan Mitchell</span></p>
+        <div>
+          <span class="price">$19.99</span>
+          <span class="original-price">$34.99</span>
+        </div>
+        <div class="rating" data-score="4.6">★★★★☆ 4.6 (214 reviews)</div>
+        <span class="tag">Scraping</span>
+        <span class="tag">BeautifulSoup</span>
+      </div>
+
+      <div class="product-card" data-id="103" data-category="databases">
+        <img src="" alt="SQL for Developers" />
+        <h3 class="book-title">SQL for Developers</h3>
+        <p class="author">by <span class="author-name">Alice Zhao</span></p>
+        <div>
+          <span class="price">$24.99</span>
+        </div>
+        <div class="rating" data-score="4.5">★★★★☆ 4.5 (189 reviews)</div>
+        <span class="tag">SQL</span>
+        <span class="tag">Intermediate</span>
+      </div>
+
+      <div class="product-card" data-id="104" data-category="javascript">
+        <span class="badge-new">New</span>
+        <img src="" alt="JavaScript: The Good Parts" />
+        <h3 class="book-title">JavaScript: The Good Parts</h3>
+        <p class="author">by <span class="author-name">Douglas Crockford</span></p>
+        <div>
+          <span class="price">$17.99</span>
+          <span class="original-price">$27.99</span>
+        </div>
+        <div class="rating" data-score="4.7">★★★★★ 4.7 (408 reviews)</div>
+        <span class="tag">JavaScript</span>
+      </div>
+
+      <div class="product-card" data-id="105" data-category="algorithms">
+        <img src="" alt="Algorithm Design" />
+        <h3 class="book-title">Algorithm Design</h3>
+        <p class="author">by <span class="author-name">Jon Kleinberg</span></p>
+        <div>
+          <span class="price">$39.99</span>
+        </div>
+        <div class="rating" data-score="4.9">★★★★★ 4.9 (527 reviews)</div>
+        <span class="tag">Algorithms</span>
+        <span class="tag">Advanced</span>
+      </div>
+
+      <div class="product-card" data-id="106" data-category="devops">
+        <span class="badge-sale">Sale</span>
+        <img src="" alt="Docker Deep Dive" />
+        <h3 class="book-title">Docker Deep Dive</h3>
+        <p class="author">by <span class="author-name">Nigel Poulton</span></p>
+        <div>
+          <span class="price">$14.99</span>
+          <span class="original-price">$24.99</span>
+        </div>
+        <div class="rating" data-score="4.4">★★★★☆ 4.4 (176 reviews)</div>
+        <span class="tag">Docker</span>
+        <span class="tag">DevOps</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================== TABLE ===================== -->
+  <section id="bestsellers-table">
+    <h2>Bestsellers This Week</h2>
+    <table id="books-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Title</th>
+          <th>Author</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Rating</th>
+          <th>In Stock</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr data-book-id="201">
+          <td>1</td>
+          <td class="book-title">Clean Code</td>
+          <td class="author-name">Robert C. Martin</td>
+          <td class="category">General</td>
+          <td class="price">$32.99</td>
+          <td class="rating">4.9</td>
+          <td class="stock stock-yes">Yes</td>
+        </tr>
+        <tr data-book-id="202">
+          <td>2</td>
+          <td class="book-title">Fluent Python</td>
+          <td class="author-name">Luciano Ramalho</td>
+          <td class="category">Python</td>
+          <td class="price">$41.99</td>
+          <td class="rating">4.8</td>
+          <td class="stock stock-yes">Yes</td>
+        </tr>
+        <tr data-book-id="203">
+          <td>3</td>
+          <td class="book-title">The Pragmatic Programmer</td>
+          <td class="author-name">David Thomas</td>
+          <td class="category">General</td>
+          <td class="price">$38.00</td>
+          <td class="rating">4.7</td>
+          <td class="stock stock-no">No</td>
+        </tr>
+        <tr data-book-id="204">
+          <td>4</td>
+          <td class="book-title">Learning SQL</td>
+          <td class="author-name">Alan Beaulieu</td>
+          <td class="category">Databases</td>
+          <td class="price">$22.50</td>
+          <td class="rating">4.5</td>
+          <td class="stock stock-yes">Yes</td>
+        </tr>
+        <tr data-book-id="205">
+          <td>5</td>
+          <td class="book-title">Automate the Boring Stuff</td>
+          <td class="author-name">Al Sweigart</td>
+          <td class="category">Python</td>
+          <td class="price">$26.00</td>
+          <td class="rating">4.8</td>
+          <td class="stock stock-yes">Yes</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===================== BLOG ===================== -->
+  <section id="latest-blog">
+    <h2>Latest from the Blog</h2>
+    <div class="blog-list">
+
+      <div class="blog-card" data-post-id="301">
+        <div>
+          <p class="meta"><span class="post-date">April 10, 2026</span> · <span class="post-author">Said Karimov</span> · <span class="post-category">Web Scraping</span></p>
+          <h3 class="post-title">How to Bypass Rate Limits When Scraping at Scale</h3>
+          <p class="post-excerpt">A practical guide to rotating proxies, delays, and session management for large-scale scrapers.</p>
+        </div>
+        <a href="/blog/bypass-rate-limits" class="read-more">Read →</a>
+      </div>
+
+      <div class="blog-card" data-post-id="302">
+        <div>
+          <p class="meta"><span class="post-date">April 5, 2026</span> · <span class="post-author">Lena Park</span> · <span class="post-category">Python</span></p>
+          <h3 class="post-title">Python asyncio vs Threading: Which Should You Use?</h3>
+          <p class="post-excerpt">We compare asyncio and threading for IO-bound tasks with benchmarks and real-world examples.</p>
+        </div>
+        <a href="/blog/asyncio-vs-threading" class="read-more">Read →</a>
+      </div>
+
+      <div class="blog-card" data-post-id="303">
+        <div>
+          <p class="meta"><span class="post-date">March 28, 2026</span> · <span class="post-author">James White</span> · <span class="post-category">Databases</span></p>
+          <h3 class="post-title">SQLAlchemy 2.0: What Changed and How to Migrate</h3>
+          <p class="post-excerpt">A complete migration checklist from SQLAlchemy 1.4 to 2.0 with code snippets for common patterns.</p>
+        </div>
+        <a href="/blog/sqlalchemy-2-migration" class="read-more">Read →</a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================== REVIEWS ===================== -->
+  <section id="customer-reviews">
+    <h2>Customer Reviews</h2>
+    <div class="reviews">
+
+      <div class="review-card" data-review-id="401">
+        <p class="reviewer">Alisher T.</p>
+        <div class="stars" data-score="5">★★★★★</div>
+        <p>The web scraping book completely changed how I approach automation projects. Highly recommended!</p>
+        <p class="date">April 11, 2026</p>
+      </div>
+
+      <div class="review-card" data-review-id="402">
+        <p class="reviewer">Maria S.</p>
+        <div class="stars" data-score="4">★★★★☆</div>
+        <p>Clean Code is a must-read. It takes time to internalize but it improves your daily coding habits.</p>
+        <p class="date">April 8, 2026</p>
+      </div>
+
+      <div class="review-card" data-review-id="403">
+        <p class="reviewer">Kevin L.</p>
+        <div class="stars" data-score="5">★★★★★</div>
+        <p>Fluent Python is the best Python book I have read. Dense but incredibly rewarding.</p>
+        <p class="date">March 30, 2026</p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer id="site-footer">
+  <p>© 2026 TechBooks Store. All rights reserved.</p>
+  <p style="margin-top: 10px;">
+    <a href="/privacy">Privacy Policy</a>
+    <a href="/terms">Terms of Service</a>
+    <a href="/sitemap">Sitemap</a>
+  </p>
+</footer>
+
+</body>
+</html>
